@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalNet Browser</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="./node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- SheetJS для работы с Excel -->
+    <!-- <script src="./node_modules/xlsx/dist/xlsx.full.min.js"></script> -->
+    <!-- DOCX.js для просмотра Word документов -->
+    <script src="./node_modules/docx-preview/dist/docx-preview.js"></script>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="./node_modules/bootstrap-icons/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --video-color: #dc3545;
+            --image-color: #198754;
+            --pdf-color: #6f42c1;
+            --folder-color: #0d6efd;
+            --document-color: #6c757d;
+            --audio-color: #ffc107;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+
+        /* Стили для просмотрщика DOCX */
+        .docx-preview {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-height: 70vh;
+            overflow: auto;
+        }
+
+        .docx-wrapper * {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+        }
+
+        .docx table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .docx table,
+        .docx th,
+        .docx td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .docx th {
+            background-color: #f8f9fa;
+        }
+
+        .file-card {
+            transition: transform 0.2s;
+            height: 100%;
+            border: 1px solid #dee2e6;
+            border-left-width: 4px;
+            overflow: hidden;
+        }
+
+        .file-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .folder-card {
+            border-left-color: var(--folder-color);
+        }
+
+        .video-card {
+            border-left-color: var(--video-color);
+        }
+
+        .image-card {
+            border-left-color: var(--image-color);
+        }
+
+        .pdf-card {
+            border-left-color: var(--pdf-color);
+        }
+
+        .document-card {
+            border-left-color: var(--document-color);
+        }
+
+        .audio-card {
+            border-left-color: var(--audio-color);
+        }
+
+        .media-container {
+            min-height: 70vh;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+        }
+
+        .path-breadcrumb {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .file-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .viewer-content {
+            padding: 10px;
+        }
+
+        .file-thumb {
+            height: 150px;
+            object-fit: cover;
+            width: 100%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-thumb {
+            background: #000;
+            color: white;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .search-input {
+            padding-left: 45px;
+        }
+
+        .nav-tabs .nav-link.active {
+            font-weight: 600;
+            border-bottom: 3px solid;
+        }
+
+        .nav-tabs .nav-link[data-type="all"].active {
+            border-bottom-color: var(--folder-color);
+            color: var(--folder-color);
+        }
+
+        .nav-tabs .nav-link[data-type="video"].active {
+            border-bottom-color: var(--video-color);
+            color: var(--video-color);
+        }
+
+        .nav-tabs .nav-link[data-type="image"].active {
+            border-bottom-color: var(--image-color);
+            color: var(--image-color);
+        }
+
+        .nav-tabs .nav-link[data-type="pdf"].active {
+            border-bottom-color: var(--pdf-color);
+            color: var(--pdf-color);
+        }
+
+        .nav-tabs .nav-link[data-type="audio"].active {
+            border-bottom-color: var(--audio-color);
+            color: var(--audio-color);
+        }
+
+        .nav-tabs .nav-link[data-type="documents"].active {
+            border-bottom-color: var(--document-color);
+            color: var(--document-color);
+        }
+
+        .card-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Стили для адаптивных медиа */
+        .img-contain {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .video-contain {
+            max-width: 100%;
+            max-height: 90vh;
+        }
+
+        /* Стили для PDF */
+        .pdf-container {
+            width: 100%;
+            height: 80vh;
+        }
+
+        .pdf-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Для таблиц и текста */
+        .viewer-content pre,
+        .viewer-content table {
+            max-width: 100%;
+            overflow: auto;
+            display: block;
+        }
+
+        /* Добавить в конец стилей */
+        .dark-theme {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        .dark-theme .card,
+        .dark-theme .path-breadcrumb,
+        .dark-theme .media-container,
+        .dark-theme .nav-tabs .nav-link,
+        .dark-theme .table {
+            background-color: #1e1e1e;
+            border-color: #333;
+        }
+
+        .dark-theme .card-title,
+        .dark-theme .card-text,
+        .dark-theme .breadcrumb a,
+        .dark-theme h5,
+        .dark-theme .text-muted,
+        .dark-theme .table,
+        .dark-theme .table th,
+        .dark-theme .table td {
+            color: #d0d0d0 !important;
+        }
+
+        .dark-theme .nav-tabs .nav-link {
+            color: #aaa;
+        }
+
+        .dark-theme .nav-tabs .nav-link.active {
+            color: #fff !important;
+        }
+
+        .dark-theme .alert {
+            background-color: #2c2c2c;
+            border-color: #444;
+        }
+
+        .dark-theme .form-control {
+            background-color: #2d2d2d;
+            color: #fff;
+            border-color: #444;
+        }
+
+        .dark-theme .form-label {
+            color: #ffffff !important;
+        }
+
+        .dark-theme .bi {
+            color: #ccc;
+        }
+
+        /* Добавить в конец стилей для dark-theme */
+        .dark-theme .search-input {
+            color: #ffffff !important;
+            background-color: #2d2d2d;
+        }
+
+        .dark-theme .search-input::placeholder {
+            color: #bbbbbb !important;
+        }
+
+        /* Добавьте в конец стилей */
+        .file-thumb img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .file-thumb {
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            overflow: hidden;
+        }
+
+        .dark-theme .file-thumb {
+            background-color: #2d2d2d;
+        }
+
+        /* Анимация загрузки */
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .loading-thumb {
+            animation: pulse 1.5s infinite;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+
+        .dark-theme .loading-thumb {
+            background: #3a3a3a;
+        }
+
+        /* Добавляем стиль для аудиоплеера */
+        .audio-player {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Шапка с поиском -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center">
+                            <button id="back" class="btn btn-outline-secondary me-3">
+                                <i class="bi bi-arrow-left"></i> Назад
+                            </button>
+                            <div class="search-container flex-grow-1">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" id="search" class="form-control form-control-lg search-input"
+                                    placeholder="Поиск файлов...">
+                            </div>
+                            <button id="theme-toggle" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-moon"></i>
+                            </button>
+                            <button id="settings-button" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-gear"></i> Настройки
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель настроек (изначально скрыта) -->
+        <div id="settings-panel" class="card shadow-sm mb-4 d-none">
+            <div class="card-body">
+                <h5 class="card-title">Настройки подключения к серверу</h5>
+                <p class="card-text">Выберите IP-адрес сервера для подключения:</p>
+                <div class="mb-3">
+                    <label for="ip-address-select" class="form-label">Доступные IP-адреса:</label>
+                    <select class="form-select" id="ip-address-select">
+                        <!-- IP-адреса будут загружены сюда через JavaScript -->
+                    </select>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button id="save-settings-button" class="btn btn-primary me-2">Сохранить</button>
+                    <button id="cancel-settings-button" class="btn btn-secondary">Отмена</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Хлебные крошки -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <nav id="breadcrumb" class="path-breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="#" data-path="/">Корень</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Фильтры по типам файлов -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <ul class="nav nav-tabs" id="fileTypeTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-type="all">
+                            <i class="bi bi-folder2-open me-1"></i> Все файлы
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-type="video">
+                            <i class="bi bi-film me-1"></i> Видео
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-type="image">
+                            <i class="bi bi-image me-1"></i> Фото
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-type="pdf">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-type="audio">
+                            <i class="bi bi-music-note me-1"></i> Аудио
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-type="documents">
+                            <i class="bi bi-file-earmark-text me-1"></i> Документы
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="row">
+            <div class="col-12">
+                <div class="media-container">
+                    <!-- Контейнер для файлов -->
+                    <div id="files-grid" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+                        <!-- Файлы будут загружаться здесь -->
+                    </div>
+
+                    <!-- Просмотрщик медиа -->
+                    <div id="media-viewer" class="mt-4 d-none">
+                        <div id="viewer-header" class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 id="viewer-title" class="mb-0"></h5>
+                            <button id="close-viewer" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-x-lg"></i> Закрыть
+                            </button>
+                        </div>
+                        <div id="viewer-content" class="viewer-content p-2 border rounded"></div>
+                    </div>
+
+                    <!-- Сообщение при отсутствии файлов -->
+                    <div id="no-files" class="text-center py-5 d-none">
+                        <i class="bi bi-folder-x" style="font-size: 3rem; color: #6c757d;"></i>
+                        <h5 class="mt-3">Файлы не найдены</h5>
+                        <p class="text-muted">Попробуйте выбрать другую папку или изменить фильтр</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./renderer.js"></script>
+</body>
+
+</html>

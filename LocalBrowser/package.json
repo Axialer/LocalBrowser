@@ -1,0 +1,43 @@
+{
+  "name": "browser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^36.3.2",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.6",
+    "bootstrap-icons": "^1.13.1",
+    "cors": "^2.8.5",
+    "docx-preview": "^0.3.5",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "sharp": "^0.34.2"
+  },
+  "build": {
+    "appId": "com.yourcompany.localbrowserclient",
+    "productName": "LocalBrowserClient",
+    "directories": {
+      "output": "../release/LocalBrowserClient"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/electron*",
+      "!node_modules/.bin"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
+  }
+}
