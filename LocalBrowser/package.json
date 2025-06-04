@@ -27,7 +27,7 @@
     "appId": "com.yourcompany.localbrowserclient",
     "productName": "LocalBrowserClient",
     "directories": {
-      "output": "../release/LocalBrowserClient"
+      "output": "../Installer/release/LocalBrowserClient"
     },
     "files": [
       "**/*",
@@ -37,7 +37,8 @@
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "icon": "icon.ico"
     }
   }
 }

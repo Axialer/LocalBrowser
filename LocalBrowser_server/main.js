@@ -172,7 +172,7 @@ app.whenReady().then(() => {
 
         devLog(`Запускаю сервер с CONTENT_PATH: ${contentPath}`);
         // Запускаем server.js как дочерний процесс
-        serverProcess = spawn('node', ['server.js'], {
+        serverProcess = spawn('node', [path.join(__dirname, 'server.js')], {
             env: { ...process.env, CONTENT_PATH: contentPath, DEV_MODE: isDev ? 'true' : 'false' }, // Передаем DEV_MODE
             stdio: ['pipe', 'pipe', 'pipe', 'ipc'] // IPC для обмена сообщениями
         });

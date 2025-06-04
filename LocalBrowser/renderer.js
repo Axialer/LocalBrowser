@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Загрузка директории
 async function loadDirectory(path = '') {
     try {
+        console.log('[DEBUG] loadDirectory: Используется SERVER_BASE_URL:', SERVER_BASE_URL);
         currentPath = path;
         updateBreadcrumb(path);
         
@@ -729,8 +730,8 @@ function saveSettings() {
     const select = document.getElementById('ip-address-select');
     SERVER_BASE_URL = select.value;
     localStorage.setItem('serverBaseUrl', SERVER_BASE_URL);
-    alert(`Базовый URL сервера установлен на: ${SERVER_BASE_URL}. Перезагрузите приложение для применения изменений.`);
+    // Убираем alert и сразу пытаемся загрузить директорию
+    // alert(`Базовый URL сервера установлен на: ${SERVER_BASE_URL}. Перезагрузите приложение для применения изменений.`);
     closeSettings();
-    // Можно добавить перезагрузку страницы или директории здесь, если нужно мгновенное применение
-    // loadDirectory(currentPath);
+    loadDirectory(currentPath); // Немедленно перезагружаем директорию с новым URL
 }
