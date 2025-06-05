@@ -396,22 +396,24 @@ server.on('connection', (socket) => {
 const udpServer = dgram.createSocket('udp4');
 const UDP_PORT = 41234;
 
-function getLocalIp() {
+function getAllLocalIps() {
     const interfaces = os.networkInterfaces();
+    const ips = [];
     for (const name in interfaces) {
         for (const iface of interfaces[name]) {
             if (iface.family === 'IPv4' && !iface.internal) {
-                return iface.address;
+                ips.push(iface.address);
             }
         }
     }
-    return '127.0.0.1';
+    return ips;
 }
 
 udpServer.on('message', (msg, rinfo) => {
     if (msg.toString() === 'DISCOVER_LOCALBROWSER_SERVER') {
-        const ip = getLocalIp();
-        udpServer.send(`LOCALBROWSER_SERVER_HERE:${ip}`, rinfo.port, rinfo.address);
+        const ips = getAllLocalIps();
+        console.log('UDP discovery ответит клиенту IP:', ips);
+        udpServer.send(`LOCALBROWSER_SERVER_HERE:${ips.join(',')}`, rinfo.port, rinfo.address);
     }
 });
 udpServer.bind(UDP_PORT, () => {

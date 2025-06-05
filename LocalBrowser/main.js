@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const dgram = require('dgram');
 
@@ -36,9 +36,19 @@ function discoverServer() {
         client.on('message', (msg, rinfo) => {
             const text = msg.toString();
             if (text.startsWith('LOCALBROWSER_SERVER_HERE:')) {
-                const ip = text.split(':')[1];
-                resolve(ip);
-                client.close();
+                const ips = text.split(':')[1].split(',');
+                console.log('Найдены IP-адреса сервера:', ips);
+                dialog.showMessageBox({
+                    type: 'question',
+                    buttons: ips,
+                    title: 'Выбор IP-адреса сервера',
+                    message: 'Выберите IP-адрес сервера для подключения:',
+                    defaultId: 0
+                }).then(result => {
+                    const selectedIp = ips[result.response];
+                    resolve(selectedIp);
+                    client.close();
+                });
             }
         });
         setTimeout(() => {
