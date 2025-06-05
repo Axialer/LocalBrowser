@@ -386,8 +386,10 @@ const udpServer = dgram.createSocket('udp4');
 const UDP_PORT = 41234;
 
 udpServer.on('message', (msg, rinfo) => {
+    console.log('UDP запрос:', msg.toString(), 'от', rinfo.address, rinfo.port);
     if (msg.toString() === 'DISCOVER_LOCALBROWSER_SERVER') {
         udpServer.send('LOCALBROWSER_SERVER_HERE', rinfo.port, rinfo.address);
+        console.log('UDP ответ отправлен на', rinfo.address, rinfo.port);
     }
 });
 udpServer.bind(UDP_PORT, () => {
@@ -420,10 +422,37 @@ function closeFirewallPort() {
     }
 }
 
-// Открываем порт при запуске
-openFirewallPort();
+// Открыть порт 5000 в брандмауэре Windows
+function openHttpFirewallPort() {
+    if (process.platform === 'win32') {
+        exec('powershell -Command "New-NetFirewallRule -DisplayName \\"LocalBrowser HTTP\\" -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow"', (err, stdout, stderr) => {
+            if (err) {
+                console.error('Ошибка открытия порта 5000 в брандмауэре:', stderr);
+            } else {
+                console.log('Порт 5000 открыт в брандмауэре Windows');
+            }
+        });
+    }
+}
 
-// Удаляем правило при завершении процесса
-process.on('exit', closeFirewallPort);
-process.on('SIGINT', () => { closeFirewallPort(); process.exit(); });
-process.on('SIGTERM', () => { closeFirewallPort(); process.exit(); });
+// Удалить правило для TCP-порта
+function closeHttpFirewallPort() {
+    if (process.platform === 'win32') {
+        exec('powershell -Command "Remove-NetFirewallRule -DisplayName \\"LocalBrowser HTTP\\""', (err, stdout, stderr) => {
+            if (err) {
+                console.error('Ошибка удаления правила брандмауэра (HTTP):', stderr);
+            } else {
+                console.log('Правило брандмауэра (HTTP) удалено');
+            }
+        });
+    }
+}
+
+// Открываем порты при запуске
+openFirewallPort();
+openHttpFirewallPort();
+
+// Удаляем правила при завершении процесса
+process.on('exit', () => { closeFirewallPort(); closeHttpFirewallPort(); });
+process.on('SIGINT', () => { closeFirewallPort(); closeHttpFirewallPort(); process.exit(); });
+process.on('SIGTERM', () => { closeFirewallPort(); closeHttpFirewallPort(); process.exit(); });

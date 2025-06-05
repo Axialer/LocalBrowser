@@ -215,6 +215,10 @@ app.whenReady().then(() => {
 
         return { success: true, message: 'Сервер запущен.' };
     });
+
+    // Открываем порты при запуске
+    openFirewallPort();      // UDP 41234
+    openHttpFirewallPort();  // TCP 5000
 });
 
 app.on('window-all-closed', () => {
@@ -252,4 +256,60 @@ app.on('before-quit', async (event) => {
         // Завершаем приложение после удаления правил (или попытки удаления)
         app.exit(0); // Используем app.exit(0) вместо app.quit()
     }
-}); 
+
+    // Удаляем правила при завершении процесса
+    closeFirewallPort();
+    closeHttpFirewallPort();
+});
+
+// Открыть порт 41234 в брандмауэре Windows
+function openFirewallPort() {
+    if (process.platform === 'win32') {
+        exec('powershell -Command "New-NetFirewallRule -DisplayName \\"LocalBrowser UDP\\" -Direction Inbound -Protocol UDP -LocalPort 41234 -Action Allow"', (err, stdout, stderr) => {
+            if (err) {
+                console.error('Ошибка открытия порта 41234 в брандмауэре:', stderr);
+            } else {
+                console.log('Порт 41234 открыт в брандмауэре Windows');
+            }
+        });
+    }
+}
+
+// Удалить правило для 41234
+function closeFirewallPort() {
+    if (process.platform === 'win32') {
+        exec('powershell -Command "Remove-NetFirewallRule -DisplayName \\"LocalBrowser UDP\\""', (err, stdout, stderr) => {
+            if (err) {
+                console.error('Ошибка удаления правила брандмауэра (UDP):', stderr);
+            } else {
+                console.log('Правило брандмауэра (UDP) удалено');
+            }
+        });
+    }
+}
+
+// Открыть порт 5000 в брандмауэре Windows
+function openHttpFirewallPort() {
+    if (process.platform === 'win32') {
+        exec('powershell -Command "New-NetFirewallRule -DisplayName \\"LocalBrowser HTTP\\" -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow"', (err, stdout, stderr) => {
+            if (err) {
+                console.error('Ошибка открытия порта 5000 в брандмауэре:', stderr);
+            } else {
+                console.log('Порт 5000 открыт в брандмауэре Windows');
+            }
+        });
+    }
+}
+
+// Удалить правило для 5000
+function closeHttpFirewallPort() {
+    if (process.platform === 'win32') {
+        exec('powershell -Command "Remove-NetFirewallRule -DisplayName \\"LocalBrowser HTTP\\""', (err, stdout, stderr) => {
+            if (err) {
+                console.error('Ошибка удаления правила брандмауэра (HTTP):', stderr);
+            } else {
+                console.log('Правило брандмауэра (HTTP) удалено');
+            }
+        });
+    }
+} 

@@ -28,9 +28,13 @@ function discoverServer() {
         const client = dgram.createSocket('udp4');
         client.bind(() => {
             client.setBroadcast(true);
-            client.send('DISCOVER_LOCALBROWSER_SERVER', 41234, '255.255.255.255');
+            client.send('DISCOVER_LOCALBROWSER_SERVER', 41234, '255.255.255.255', (err) => {
+                if (err) console.error('Ошибка отправки UDP:', err);
+                else console.log('UDP broadcast отправлен');
+            });
         });
         client.on('message', (msg, rinfo) => {
+            console.log('UDP ответ получен:', msg.toString(), 'от', rinfo.address);
             if (msg.toString() === 'LOCALBROWSER_SERVER_HERE') {
                 resolve(rinfo.address);
                 client.close();
