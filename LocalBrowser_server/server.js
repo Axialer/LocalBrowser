@@ -5,6 +5,7 @@ const sharp = require('sharp');
 const app = express();
 const port = 5000;
 const dgram = require('dgram');
+const { exec } = require('child_process');
 
 // Флаг для определения режима разработки, переданный из главного процесса
 const isDev = process.env.DEV_MODE === 'true';
@@ -392,3 +393,37 @@ udpServer.on('message', (msg, rinfo) => {
 udpServer.bind(UDP_PORT, () => {
     devLog(`UDP discovery server started on port ${UDP_PORT}`);
 });
+
+// Открыть порт 41234 в брандмауэре Windows
+function openFirewallPort() {
+    if (process.platform === 'win32') {
+        exec('powershell -Command "New-NetFirewallRule -DisplayName \\"LocalBrowser UDP Discovery\\" -Direction Inbound -Protocol UDP -LocalPort 41234 -Action Allow"', (err, stdout, stderr) => {
+            if (err) {
+                console.error('Ошибка открытия порта 41234 в брандмауэре:', stderr);
+            } else {
+                console.log('Порт 41234 открыт в брандмауэре Windows');
+            }
+        });
+    }
+}
+
+// Удалить правило
+function closeFirewallPort() {
+    if (process.platform === 'win32') {
+        exec('powershell -Command "Remove-NetFirewallRule -DisplayName \\"LocalBrowser UDP Discovery\\""', (err, stdout, stderr) => {
+            if (err) {
+                console.error('Ошибка удаления правила брандмауэра:', stderr);
+            } else {
+                console.log('Правило брандмауэра удалено');
+            }
+        });
+    }
+}
+
+// Открываем порт при запуске
+openFirewallPort();
+
+// Удаляем правило при завершении процесса
+process.on('exit', closeFirewallPort);
+process.on('SIGINT', () => { closeFirewallPort(); process.exit(); });
+process.on('SIGTERM', () => { closeFirewallPort(); process.exit(); });

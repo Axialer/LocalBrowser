@@ -11,6 +11,14 @@ const ExcelJS = require('exceljs'); // Импортируем exceljs
 // Глобальная переменная для базового URL сервера
 let SERVER_BASE_URL = localStorage.getItem('serverBaseUrl') || 'http://localhost:5000';
 
+// Получаем IP сервера, если он был передан из main process
+const serverIpArg = process.argv.find(arg => arg.startsWith('--server-ip='));
+if (serverIpArg) {
+    const ip = serverIpArg.split('=')[1];
+    SERVER_BASE_URL = `http://${ip}:5000`;
+    localStorage.setItem('serverBaseUrl', SERVER_BASE_URL);
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     // Загрузка корневой директории
@@ -735,3 +743,4 @@ function saveSettings() {
     closeSettings();
     loadDirectory(currentPath); // Немедленно перезагружаем директорию с новым URL
 }
+

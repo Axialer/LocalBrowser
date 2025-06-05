@@ -4,18 +4,23 @@ const dgram = require('dgram');
 
 let mainWindow;
 
-function createWindow() {
+app.whenReady().then(async () => {
+    const serverIp = await discoverServer();
+    createWindow(serverIp);
+});
+
+function createWindow(serverIp) {
     mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            additionalArguments: serverIp ? [`--server-ip=${serverIp}`] : []
         }
     });
 
     mainWindow.loadFile('index.html');
-    // mainWindow.webContents.openDevTools(); // Для разработки
 }
 
 function discoverServer() {
@@ -37,8 +42,6 @@ function discoverServer() {
         }, 2000);
     });
 }
-
-app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
