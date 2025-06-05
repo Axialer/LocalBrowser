@@ -1,22 +1,22 @@
 const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const dgram = require('dgram');
+const { exec } = require('child_process');
 
 let mainWindow;
 
-app.whenReady().then(async () => {
-    const serverIp = await discoverServer();
-    createWindow(serverIp);
+
+app.whenReady().then(() => {
+    createWindow();
 });
 
-function createWindow(serverIp) {
+function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false,
-            additionalArguments: serverIp ? [`--server-ip=${serverIp}`] : []
+            contextIsolation: false
         }
     });
 
@@ -46,7 +46,7 @@ function discoverServer() {
                     defaultId: 0
                 }).then(result => {
                     const selectedIp = ips[result.response];
-                    resolve(selectedIp);
+                    resolve({ selectedIp, allIps: ips });
                     client.close();
                 });
             }
@@ -59,5 +59,10 @@ function discoverServer() {
 }
 
 app.on('window-all-closed', () => {
+    closeClientFirewallPort();
     if (process.platform !== 'darwin') app.quit();
 });
+
+process.on('exit', () => { closeClientFirewallPort(); });
+process.on('SIGINT', () => { closeClientFirewallPort(); process.exit(); });
+process.on('SIGTERM', () => { closeClientFirewallPort(); process.exit(); });

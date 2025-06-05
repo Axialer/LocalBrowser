@@ -22,6 +22,12 @@ if (serverIpArg) {
 console.log('[DEBUG] SERVER_BASE_URL:', SERVER_BASE_URL);
 console.log('[DEBUG] process.argv:', process.argv);
 
+const serverIpsArg = process.argv.find(arg => arg.startsWith('--server-ips='));
+let SERVER_IPS = [];
+if (serverIpsArg) {
+    SERVER_IPS = serverIpsArg.split('=')[1].split(',');
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     // Загрузка корневой директории
@@ -58,6 +64,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Загрузить IP-адреса при открытии настроек
     populateIPAddresses();
+
+    document.getElementById('save-settings-btn').onclick = function() {
+        const ip = document.getElementById('ip-address-input').value.trim();
+        if (ip) {
+            localStorage.setItem('server-ip', ip);
+            // Здесь твоя логика подключения к серверу по этому IP
+            // Например, window.SERVER_BASE_URL = 'http://' + ip;
+            location.reload(); // если нужно перезагрузить с новым IP
+        } else {
+            alert('Пожалуйста, введите IP-адрес сервера!');
+        }
+    };
+
+    // При открытии настроек подставлять сохранённый IP
+    const savedIp = localStorage.getItem('server-ip');
+    if (savedIp) {
+        document.getElementById('ip-address-input').value = savedIp;
+    }
 });
 
 // Загрузка директории
@@ -636,27 +660,10 @@ function escapeHtml(text) {
 
 // Добавить новую функцию для автоматической регулировки размера
 function adjustImageSize(img) {
-    // const container = document.getElementById('viewer-content'); // Не используется напрямую
-    // const viewer = document.getElementById('media-viewer'); // Не используется напрямую
-    
-    // Рассчитываем максимальные размеры
-    const maxWidth = window.innerWidth * 0.9;
-    const maxHeight = window.innerHeight * 0.8;
-    
-    // Определяем ориентацию
-    const isPortrait = img.naturalHeight > img.naturalWidth;
-    
-    if (isPortrait) {
-        // Вертикальное изображение - ограничиваем по высоте
-        img.style.maxHeight = `${maxHeight}px`;
-        img.style.width = 'auto';
-    } else {
-        // Горизонтальное изображение - ограничиваем по ширине
-        img.style.maxWidth = `${maxWidth}px`;
-        img.style.height = 'auto';
-    }
-    
-    // Центрируем изображение
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '80vh';
+    img.style.width = 'auto';
+    img.style.height = 'auto';
     img.style.display = 'block';
     img.style.margin = '0 auto';
 }
@@ -686,9 +693,13 @@ function openSettings() {
     document.getElementById('files-grid').classList.add('d-none');
     document.getElementById('media-viewer').classList.add('d-none');
     document.getElementById('no-files').classList.add('d-none');
-    document.getElementById('search').value = ''; // Очищаем поле поиска
-    filterFilesByType('all'); // Сбрасываем фильтры
-    populateIPAddresses(); // Обновляем список IP-адресов каждый раз при открытии
+    document.getElementById('search').value = '';
+    filterFilesByType('all');
+    // Подставляем сохранённый IP
+    const savedIp = localStorage.getItem('serverBaseUrl');
+    if (savedIp) {
+        document.getElementById('ip-address-input').value = savedIp.replace(/^https?:\/\//, '');
+    }
 }
 
 function closeSettings() {
@@ -733,17 +744,33 @@ async function populateIPAddresses() {
         select.appendChild(option);
     });
 
+    // Добавляем IP-адреса сервера, если они есть
+    if (SERVER_IPS.length > 0) {
+        SERVER_IPS.forEach(ip => {
+            const option = document.createElement('option');
+            option.value = `http://${ip}:5000`;
+            option.textContent = `http://${ip}:5000 (Сервер)`;
+            select.appendChild(option);
+        });
+    }
+
     // Выбираем текущий SERVER_BASE_URL
     select.value = SERVER_BASE_URL;
 }
 
 function saveSettings() {
-    const select = document.getElementById('ip-address-select');
-    SERVER_BASE_URL = select.value;
+    const input = document.getElementById('ip-address-input');
+    let ip = input.value.trim();
+    if (!ip) {
+        alert('Пожалуйста, введите IP-адрес сервера!');
+        return;
+    }
+    if (!ip.startsWith('http://') && !ip.startsWith('https://')) {
+        ip = 'http://' + ip;
+    }
+    SERVER_BASE_URL = ip;
     localStorage.setItem('serverBaseUrl', SERVER_BASE_URL);
-    // Убираем alert и сразу пытаемся загрузить директорию
-    // alert(`Базовый URL сервера установлен на: ${SERVER_BASE_URL}. Перезагрузите приложение для применения изменений.`);
     closeSettings();
-    loadDirectory(currentPath); // Немедленно перезагружаем директорию с новым URL
+    loadDirectory('/'); // Перезагружаем корень с новым URL
 }
 
