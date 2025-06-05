@@ -34,9 +34,10 @@ function discoverServer() {
             });
         });
         client.on('message', (msg, rinfo) => {
-            console.log('UDP ответ получен:', msg.toString(), 'от', rinfo.address);
-            if (msg.toString() === 'LOCALBROWSER_SERVER_HERE') {
-                resolve(rinfo.address);
+            const text = msg.toString();
+            if (text.startsWith('LOCALBROWSER_SERVER_HERE:')) {
+                const ip = text.split(':')[1];
+                resolve(ip);
                 client.close();
             }
         });

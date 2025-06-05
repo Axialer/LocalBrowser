@@ -8,16 +8,19 @@ const path = require('path');
 const os = require('os'); // Импортируем модуль 'os'
 const ExcelJS = require('exceljs'); // Импортируем exceljs
 
-// Глобальная переменная для базового URL сервера
-let SERVER_BASE_URL = localStorage.getItem('serverBaseUrl') || 'http://localhost:5000';
-
 // Получаем IP сервера, если он был передан из main process
 const serverIpArg = process.argv.find(arg => arg.startsWith('--server-ip='));
+let SERVER_BASE_URL;
 if (serverIpArg) {
     const ip = serverIpArg.split('=')[1];
     SERVER_BASE_URL = `http://${ip}:5000`;
     localStorage.setItem('serverBaseUrl', SERVER_BASE_URL);
+} else {
+    SERVER_BASE_URL = localStorage.getItem('serverBaseUrl') || 'http://localhost:5000';
 }
+
+console.log('[DEBUG] SERVER_BASE_URL:', SERVER_BASE_URL);
+console.log('[DEBUG] process.argv:', process.argv);
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
