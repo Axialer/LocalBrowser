@@ -4,6 +4,7 @@ const fs = require('fs').promises;
 const sharp = require('sharp');
 const app = express();
 const port = 5000;
+const dgram = require('dgram');
 
 // Флаг для определения режима разработки, переданный из главного процесса
 const isDev = process.env.DEV_MODE === 'true';
@@ -378,4 +379,16 @@ server.on('connection', (socket) => {
         activeClients.delete(socket);
         sendClientListToElectron();
     });
+});
+
+const udpServer = dgram.createSocket('udp4');
+const UDP_PORT = 41234;
+
+udpServer.on('message', (msg, rinfo) => {
+    if (msg.toString() === 'DISCOVER_LOCALBROWSER_SERVER') {
+        udpServer.send('LOCALBROWSER_SERVER_HERE', rinfo.port, rinfo.address);
+    }
+});
+udpServer.bind(UDP_PORT, () => {
+    devLog(`UDP discovery server started on port ${UDP_PORT}`);
 });
