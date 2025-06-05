@@ -6,6 +6,7 @@ const app = express();
 const port = 5000;
 const dgram = require('dgram');
 const { exec } = require('child_process');
+const os = require('os');
 
 // Флаг для определения режима разработки, переданный из главного процесса
 const isDev = process.env.DEV_MODE === 'true';
@@ -359,8 +360,18 @@ app.get('/api/thumbnail', async (req, res) => {
 });
 
 // Перехватываем соединения для отслеживания клиентов
-const server = app.listen(port, () => {
-    devLog(`Server started: http://localhost:${port}`);
+const server = app.listen(port, '0.0.0.0', () => {
+    devLog(`Server started: http://0.0.0.0:${port}`);
+    // Выводим все IP-адреса
+    const interfaces = os.networkInterfaces();
+    console.log('Сервер доступен по следующим адресам:');
+    for (const name in interfaces) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                console.log(`  http://${iface.address}:${port}`);
+            }
+        }
+    }
 });
 
 server.on('connection', (socket) => {
